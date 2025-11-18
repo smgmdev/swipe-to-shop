@@ -7,14 +7,20 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    // Vercel parses JSON automatically
-    const { amount, orderId, description, successUrl, failUrl } = req.body || {};
+    // --- Body parsing: Vercel does NOT parse JSON for non-Next.js apps ---
+    let raw = "";
+    for await (const chunk of req) {
+      raw += chunk;
+    }
+
+    const { amount, orderId, description, successUrl, failUrl } =
+      raw ? JSON.parse(raw) : {};
 
     if (!amount) {
       return res.status(400).json({ error: "Amount missing" });
     }
 
-    // DEMO KEYS (sandbox only)
+    // DEMO KEYS
     const TerminalKey = "1614714816763DEMO";
     const SecretKey = "TinkoffBankTest";
 
@@ -23,6 +29,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Invalid amount" });
     }
 
+    // DEMO PAYLOAD
     const payload = {
       TerminalKey,
       Amount: Math.round(cleanAmount * 100),
@@ -32,29 +39,32 @@ export default async function handler(req, res) {
       FailURL: failUrl,
     };
 
-    // Token generation (ESM compatible)
-    const sortedKeys = Object.keys(payload).sort();
-    let tokenString = "";
-    for (const key of sortedKeys) tokenString += `${key}=${payload[key]}`;
-    tokenString += SecretKey;
+    // DEMO SIGNATURE — EXACT FORM REQUIRED
+    const tokenString =
+      payload.OrderId +
+      payload.Amount +
+      payload.TerminalKey +
+      SecretKey;
 
-    payload.Token = crypto.createHash("sha256").update(tokenString).digest("hex");
+    payload.Token = crypto
+      .createHash("sha256")
+      .update(tokenString)
+      .digest("hex");
 
-    // Send to Tinkoff DEMO
-    const tinkoffResponse = await fetch("https://securepay.tinkoff.ru/v2/Init", {
+    // SEND TO TINKOFF
+    const response = await fetch("https://securepay.tinkoff.ru/v2/Init", {
       method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    const data = await tinkoffResponse.json();
+    const data = await response.json();
 
     if (!data.Success) {
       return res.status(400).json({ tinkoff: data, payload });
     }
 
     return res.status(200).json({ url: data.PaymentURL });
-
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
