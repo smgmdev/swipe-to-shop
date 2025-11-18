@@ -31,16 +31,16 @@ export default async function handler(req, res) {
       OrderId: orderId || ("order-" + Date.now()),
       Description: description || "Payment",
       SuccessURL: successUrl,
-      FailURL: failUrl
+      FailURL: failUrl,
     };
 
     // DEMO SIGNATURE RULE:
     // Token = sha256(OrderId + Amount + TerminalKey + SecretKey)
     const crypto = await import("crypto");
-    const tokenString = 
-      payload.OrderId + 
-      payload.Amount + 
-      payload.TerminalKey + 
+    const tokenString =
+      payload.OrderId +
+      payload.Amount +
+      payload.TerminalKey +
       SecretKey;
 
     payload.Token = crypto
