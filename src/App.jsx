@@ -92,6 +92,12 @@ export default function App() {
   const [address, setAddress] = useState("");
 
   const product = products[index] || {};
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Reset loader whenever product or image changes
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [index, carouselIndex]);
   const [zoomImage, setZoomImage] = useState(null);
 
   const handleSwipe = (direction) => {
@@ -195,12 +201,49 @@ async function handleTinkoffPay(product) {
     setPopupProduct(null);
   };
 
-  return (
+  // LINKEDIN-STYLE APP LOADER
+  const [appLoading, setAppLoading] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setAppLoading(false), 1200);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (appLoading) {
+    return (
+      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center gap-6 z-[9999]">
+        <img
+          src="https://corporate.stankeviciusgroup.com/assets/swipe/mbb.png"
+          className="w-20 h-20 rounded-full shadow-md animate-[fadeIn_0.6s_ease]"
+        />
+
+        <div className="w-48 h-1.5 bg-black/10 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: "100%" }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            className="h-full w-1/3 bg-black rounded-full"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (<>
+    {loading && (
+      <div className="fixed inset-0 bg-white/90 flex items-center justify-center z-[999]">
+        <motion.div
+          initial={{ scale: 0.6, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ repeat: Infinity, repeatType: 'reverse', duration: 0.6, ease: 'easeInOut' }}
+          className="w-10 h-10 rounded-full border-4 border-white/40 border-t-transparent"
+        />
+      </div>
+    )}
     <div className="min-h-screen bg-[#f5f5f7] flex flex-col items-center pt-10 px-5 font-sans text-[#111827]">
       <header className="w-full max-w-md mb-6 flex items-center justify-between">
         <div className="flex flex-col">
           <span className="text-[0.7rem] uppercase tracking-[0.3em] text-black/40">MULLANABRAND.COM</span>
-          <h1 className="text-[1.4rem] font-semibold tracking-tight">Fashion Swipe</h1>
+          <h1 className="text-[1.4rem] font-semibold tracking-tight">Swipe to Buy</h1>
         </div>
         <div className="flex items-center gap-2">
   <div className="relative">
@@ -261,8 +304,8 @@ async function handleTinkoffPay(product) {
                 <p className="text-sm mt-1 opacity-90">{currency === "USD" ? "$" + convertPrice(product.price) : convertPrice(product.price) + " ₽"}</p>
               </div>
 
-              <img
-                onClick={() => setZoomImage(product.images?.[carouselIndex] || product.image)}
+              {!imageLoaded && (<div className="absolute inset-0 flex items-center justify-center bg-black/10 z-40"><img src="https://corporate.stankeviciusgroup.com/assets/swipe/loading.gif" className="w-16 h-16 opacity-80" /></div>)}
+              <img onLoad={() => setImageLoaded(true)} onClick={() => setZoomImage(product.images?.[carouselIndex] || product.image)}
                 src={product.images?.[carouselIndex] || product.image}
                 alt={product.title}
                 className="w-full h-full object-cover"
@@ -647,5 +690,5 @@ async function handleTinkoffPay(product) {
         )}
       </AnimatePresence>
     </div>
-  );
+  </>);
 }
