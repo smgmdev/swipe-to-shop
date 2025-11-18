@@ -12,6 +12,7 @@ const USDT_WALLET = "TVbHjvymscTb8JDk7jHXqHZJGFMWnGEU3o";
 
 export default function App() {
   const [currency, setCurrency] = useState("USD");
+  const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
   const [usdToRub, setUsdToRub] = useState(1);
   const convertPrice = (p) => currency === "USD" ? p : Math.round(p * usdToRub);
 
@@ -202,14 +203,31 @@ async function handleTinkoffPay(product) {
           <h1 className="text-[1.4rem] font-semibold tracking-tight">Fashion Swipe</h1>
         </div>
         <div className="flex items-center gap-2">
-  <select
-    className="border border-black/20 rounded-lg px-2 py-1 text-[0.75rem] bg-white"
-    value={currency}
-    onChange={(e) => setCurrency(e.target.value)}
-  >
-    <option value="USD">USD</option>
-    <option value="RUB">RUB</option>
-  </select>
+  <div className="relative">
+    <button
+      type="button"
+      onClick={() => setShowCurrencyMenu(!showCurrencyMenu)}
+      className="flex items-center gap-2 border border-black/20 rounded-xl px-3 py-1.5 bg-white text-[0.75rem] shadow-sm hover:shadow-md transition-all"
+    >
+      <span className="font-medium">{currency}</span>
+      <span className="text-[0.6rem]">▾</span>
+    </button>
+
+    {showCurrencyMenu && (
+      <div className="absolute right-0 mt-1 w-28 bg-white border border-black/10 rounded-xl shadow-lg overflow-hidden z-50">
+        {['USD','RUB'].map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => { setCurrency(c); setShowCurrencyMenu(false); }}
+            className={`w-full text-left px-4 py-2 text-[0.75rem] hover:bg-black/5 ${currency === c ? 'bg-black/10 font-semibold' : ''}`}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
   <img src="https://corporate.stankeviciusgroup.com/assets/swipe/mbb.png" alt="Logo" className="w-10 h-10 rounded-full object-cover" />
 </div>
       </header>
