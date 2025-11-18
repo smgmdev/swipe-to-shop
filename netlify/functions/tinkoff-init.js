@@ -27,8 +27,8 @@ export async function handler(event) {
         statusCode: 400,
         body: JSON.stringify({
           error: "Invalid amount (must be numeric)",
-          received: body.amount,
-        }),
+          received: body.amount
+        })
       };
     }
 
@@ -39,21 +39,21 @@ export async function handler(event) {
       Amount,
       OrderId: body.orderId || "order-" + Date.now(),
       Description: body.description || "Payment",
-      SuccessURL: body.successUrl || "https://google.com",
-      FailURL: body.failUrl || "https://google.com",
+      SuccessURL: body.successUrl || "https://example.com/success",
+      FailURL: body.failUrl || "https://example.com/fail"
     };
 
-    // remove undefined fields
+    // Remove undefined fields
     Object.keys(payload).forEach(
-      (key) => (payload[key] === undefined || payload[key] === null) && delete payload[key]
+      key => (payload[key] === undefined || payload[key] === null) && delete payload[key]
     );
 
+    // Token generation
     const crypto = await import("crypto");
-
     const tokenString =
       Object.keys(payload)
         .sort()
-        .map((key) => `${key}=${payload[key]}`)
+        .map(key => `${key}=${payload[key]}`)
         .join("") + SecretKey;
 
     const Token = crypto
@@ -63,37 +63,39 @@ export async function handler(event) {
 
     payload.Token = Token;
 
-    // DEMO endpoint
+    // DEMO endpoint (NOT production)
     const TINKOFF_URL = "https://rest-api-test.tinkoff.ru/v2/Init";
 
     const response = await fetch(TINKOFF_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
 
-    const json = await response.json();
+    const text = await response.text();
 
-    // Log for debugging
-    console.log("TINKOFF RESPONSE:", json);
+    // Tinkoff may return HTML on error → catch it
+    try {
+      const json = JSON.parse(text);
 
-    if (!json.Success) {
       return {
-        statusCode: 400,
-        body: JSON.stringify(json),
+        statusCode: 200,
+        body: JSON.stringify(json)
+      };
+    } catch (err) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: "Tinkoff returned non-JSON response",
+          raw: text
+        })
       };
     }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ url: json.PaymentURL }),
-    };
-
   } catch (err) {
-    console.error("Function error:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
+      body: JSON.stringify({ error: err.message })
     };
   }
 }
