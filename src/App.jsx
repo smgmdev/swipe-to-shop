@@ -243,7 +243,7 @@ async function handleTinkoffPay(product) {
       <header className="w-full max-w-md mb-6 flex items-center justify-between">
         <div className="flex flex-col">
           <span className="text-[0.7rem] uppercase tracking-[0.3em] text-black/40">MULLANABRAND.COM</span>
-          <h1 className="text-[1.4rem] font-semibold tracking-tight">Swipe to Buy</h1>
+          <h1 className="text-[1.4rem] font-semibold tracking-tight">Swipe to Shop</h1>
         </div>
         <div className="flex items-center gap-2">
   <div className="relative">
