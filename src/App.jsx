@@ -304,12 +304,17 @@ async function handleTinkoffPay(product) {
                 <p className="text-sm mt-1 opacity-90">{currency === "USD" ? "$" + convertPrice(product.price) : convertPrice(product.price) + " ₽"}</p>
               </div>
 
-              {!imageLoaded && (<div className="absolute inset-0 flex items-center justify-center bg-black/10 z-40"><motion.div
-  initial={{ scale: 0.8, opacity: 0 }}
-  animate={{ scale: 1, opacity: 1 }}
-  transition={{ repeat: Infinity, repeatType: 'reverse', duration: 0.6, ease: 'easeInOut' }}
-  className="w-10 h-10 rounded-full border-4 border-white/40 border-t-transparent"
-/></div>)}
+              {!imageLoaded && (<div className="absolute inset-0 flex flex-col items-center justify-center bg-black/10 z-40">
+  <img src="https://corporate.stankeviciusgroup.com/assets/swipe/mbb.png" className="w-14 h-14 rounded-full mb-4 opacity-95" />
+  <div className="w-32 h-1.5 bg-black/20 rounded-full overflow-hidden">
+    <motion.div
+      initial={{ x: '-100%' }}
+      animate={{ x: '100%' }}
+      transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
+      className="h-full w-1/3 bg-black rounded-full"
+    />
+  </div>
+</div>)}
               <img onLoad={() => setImageLoaded(true)} onClick={() => setZoomImage(product.images?.[carouselIndex] || product.image)}
                 src={product.images?.[carouselIndex] || product.image}
                 alt={product.title}
