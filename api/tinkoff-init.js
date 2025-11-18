@@ -1,28 +1,20 @@
-// /api/tinkoff-init.js — WORKING VERCEL API (CommonJS)
+// api/tinkoff-init.js
+import crypto from "crypto";
 
-const crypto = require("crypto");
-
-module.exports = async (req, res) => {
-  // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
+export default async function handler(req, res) {
   try {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+
+    // Vercel parses JSON automatically
     const { amount, orderId, description, successUrl, failUrl } = req.body || {};
 
     if (!amount) {
       return res.status(400).json({ error: "Amount missing" });
     }
 
+    // DEMO KEYS (sandbox only)
     const TerminalKey = "1614714816763DEMO";
     const SecretKey = "TinkoffBankTest";
 
@@ -40,20 +32,22 @@ module.exports = async (req, res) => {
       FailURL: failUrl,
     };
 
-    // DEMO SIGNATURE RULE
-    const tokenString =
-      payload.OrderId + payload.Amount + payload.TerminalKey + SecretKey;
+    // Token generation (ESM compatible)
+    const sortedKeys = Object.keys(payload).sort();
+    let tokenString = "";
+    for (const key of sortedKeys) tokenString += `${key}=${payload[key]}`;
+    tokenString += SecretKey;
 
     payload.Token = crypto.createHash("sha256").update(tokenString).digest("hex");
 
-    // SEND TO TINKOFF DEMO
-    const response = await fetch("https://securepay.tinkoff.ru/v2/Init", {
+    // Send to Tinkoff DEMO
+    const tinkoffResponse = await fetch("https://securepay.tinkoff.ru/v2/Init", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    const data = await tinkoffResponse.json();
 
     if (!data.Success) {
       return res.status(400).json({ tinkoff: data, payload });
@@ -64,4 +58,4 @@ module.exports = async (req, res) => {
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
-};
+}
