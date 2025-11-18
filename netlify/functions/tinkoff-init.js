@@ -7,27 +7,47 @@ export async function handler(event) {
     const TerminalKey = config.TerminalKey;
     const SecretKey = config.SecretKey;
 
+    const cleanAmount = Number(body.amount);
+    if (!cleanAmount || isNaN(cleanAmount)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: "Invalid amount (must be numeric)",
+          received: body.amount,
+        }),
+      };
+    }
+
+    const Amount = Math.round(cleanAmount * 100);
+
     const payload = {
       TerminalKey,
-      Amount: Math.round(body.amount * 100),
-      OrderId: "order-" + Date.now(),
-      Description: body.description,
+      Amount,
+      OrderId: body.orderId || "order-" + Date.now(),
+      Description: body.description || "Payment",
       SuccessURL: body.successUrl,
       FailURL: body.failUrl,
     };
 
-    const tokenString =
+    // --- TOKEN GENERATION (SHA-256) ---
+    const tokenBase =
       Object.keys(payload)
         .sort()
         .map((key) => `${key}=${payload[key]}`)
         .join("") + SecretKey;
 
     const crypto = await import("crypto");
-    const Token = crypto.createHash("sha256").update(tokenString).digest("hex");
+    const Token = crypto
+      .createHash("sha256")
+      .update(tokenBase)
+      .digest("hex");
 
     payload.Token = Token;
 
-    const response = await fetch("https://securepay.tinkoff.ru/v2/Init", {
+    // --- IMPORTANT: DEMO ENDPOINT ---
+    const TINKOFF_DEMO_URL = "https://rest-api-test.tinkoff.ru/v2/Init";
+
+    const response = await fetch(TINKOFF_DEMO_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
