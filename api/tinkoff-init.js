@@ -1,10 +1,9 @@
 export default async function handler(req, res) {
-  // CORS HEADERS
+  // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Preflight response
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -16,13 +15,10 @@ export default async function handler(req, res) {
 
     const { amount, orderId, description, successUrl, failUrl } = req.body || {};
 
-    if (!amount) {
-      return res.status(400).json({ error: "Amount missing" });
-    }
+    if (!amount) return res.status(400).json({ error: "Amount missing" });
 
-    // DEMO SANDBOX KEYS
     const TerminalKey = "1614714816763DEMO";
-    const SecretKey = "TinkoffBankTest";
+    const SecretKey   = "TinkoffBankTest";
 
     const cleanAmount = Number(amount);
     if (isNaN(cleanAmount)) {
@@ -32,32 +28,30 @@ export default async function handler(req, res) {
     const payload = {
       TerminalKey,
       Amount: Math.round(cleanAmount * 100),
-      OrderId: orderId || "order-" + Date.now(),
+      OrderId: orderId || ("order-" + Date.now()),
       Description: description || "Payment",
       SuccessURL: successUrl,
-      FailURL: failUrl,
+      FailURL: failUrl
     };
 
-    // Generate token
+    // DEMO SIGNATURE RULE:
+    // Token = sha256(OrderId + Amount + TerminalKey + SecretKey)
     const crypto = await import("crypto");
-    const sortedKeys = Object.keys(payload).sort();
-
-    let tokenString = "";
-    for (const key of sortedKeys) {
-      tokenString += `${key}=${payload[key]}`;
-    }
-    tokenString += SecretKey;
+    const tokenString = 
+      payload.OrderId + 
+      payload.Amount + 
+      payload.TerminalKey + 
+      SecretKey;
 
     payload.Token = crypto
       .createHash("sha256")
       .update(tokenString)
       .digest("hex");
 
-    // Send to Tinkoff DEMO
     const tinkoffResponse = await fetch("https://securepay.tinkoff.ru/v2/Init", {
       method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
 
     const data = await tinkoffResponse.json();
