@@ -158,8 +158,8 @@ async function handleTinkoffPay(product) {
         amount: Number(product.price ?? 0),
         description: product.title,
         orderId: "order-" + Date.now(),
-        successUrl: window.location.origin + "/success",
-        failUrl: window.location.origin + "/fail",
+        successUrl: window.location.origin + "/success", failUrl: window.location.origin + "/fail",
+
       })
     });
 
