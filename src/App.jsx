@@ -155,7 +155,7 @@ async function handleTinkoffPay(product) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        amount: Number(product.price),
+        amount: Number(product.price ?? 0),
         description: product.title,
         orderId: "order-" + Date.now(),
         successUrl: window.location.origin + "/success",
