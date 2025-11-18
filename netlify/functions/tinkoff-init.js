@@ -1,11 +1,25 @@
-import config from "./config.json";
+import config from "./config.json" assert { type: "json" };
 
 export async function handler(event) {
   try {
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Missing request body" })
+      };
+    }
+
     const body = JSON.parse(event.body);
 
     const TerminalKey = config.TerminalKey;
     const SecretKey = config.SecretKey;
+
+    if (!TerminalKey || !SecretKey) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Missing TerminalKey or SecretKey in config.json" })
+      };
+    }
 
     const cleanAmount = Number(body.amount);
     if (!cleanAmount || isNaN(cleanAmount)) {
@@ -25,35 +39,43 @@ export async function handler(event) {
       Amount,
       OrderId: body.orderId || "order-" + Date.now(),
       Description: body.description || "Payment",
-      SuccessURL: body.successUrl,
-      FailURL: body.failUrl,
+      SuccessURL: body.successUrl || "https://google.com",
+      FailURL: body.failUrl || "https://google.com",
     };
 
-    // --- TOKEN GENERATION (SHA-256) ---
-    const tokenBase =
+    // remove undefined fields
+    Object.keys(payload).forEach(
+      (key) => (payload[key] === undefined || payload[key] === null) && delete payload[key]
+    );
+
+    const crypto = await import("crypto");
+
+    const tokenString =
       Object.keys(payload)
         .sort()
         .map((key) => `${key}=${payload[key]}`)
         .join("") + SecretKey;
 
-    const crypto = await import("crypto");
     const Token = crypto
       .createHash("sha256")
-      .update(tokenBase)
+      .update(tokenString)
       .digest("hex");
 
     payload.Token = Token;
 
-    // --- IMPORTANT: DEMO ENDPOINT ---
-    const TINKOFF_DEMO_URL = "https://rest-api-test.tinkoff.ru/v2/Init";
+    // DEMO endpoint
+    const TINKOFF_URL = "https://rest-api-test.tinkoff.ru/v2/Init";
 
-    const response = await fetch(TINKOFF_DEMO_URL, {
+    const response = await fetch(TINKOFF_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
     const json = await response.json();
+
+    // Log for debugging
+    console.log("TINKOFF RESPONSE:", json);
 
     if (!json.Success) {
       return {
@@ -66,7 +88,9 @@ export async function handler(event) {
       statusCode: 200,
       body: JSON.stringify({ url: json.PaymentURL }),
     };
+
   } catch (err) {
+    console.error("Function error:", err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message }),
