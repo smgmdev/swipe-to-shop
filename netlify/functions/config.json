@@ -1,4 +1,4 @@
 {
-  "TerminalKey": "YOUR_TINKOFF_TERMINAL_KEY",
-  "SecretKey": "YOUR_TINKOFF_SECRET_KEY"
+  "TerminalKey": "TinkoffBankTest",
+  "SecretKey": "TinkoffBankTest"
 }
