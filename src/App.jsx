@@ -523,7 +523,7 @@ async function handleTinkoffPay(product) {
                       {paymentMethod === "Tinkoff" && (
   <div className="space-y-3">
     <div className="space-y-3 text-center text-[0.8rem] text-black/70 p-4 bg-white rounded-2xl border border-black/10">
-      <img src="http://corporate.stankeviciusgroup.com/assets/swipe/tinkoff.png" alt="Tinkoff Logo" className="w-20 mx-auto mb-2 opacity-90" />
+      <img src="https://corporate.stankeviciusgroup.com/assets/swipe/tinkoff.png" alt="Tinkoff Logo" className="w-20 mx-auto mb-2 opacity-90" />
       <p className="text-sm font-medium">Tinkoff Payment</p>
       <p className="text-[0.75rem] text-black/60">You will be redirected to Tinkoff secure payment page.</p>
     </div>
