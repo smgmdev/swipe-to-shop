@@ -151,7 +151,7 @@ export default function App() {
   // Tinkoff card payment init
 async function handleTinkoffPay(product) {
   try {
-    const response = await fetch("/.netlify/functions/tinkoff-init", {
+    const response = await fetch("https://tinkoff-backend.onrender.com/tinkoff-init", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
