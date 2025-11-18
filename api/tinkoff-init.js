@@ -1,24 +1,23 @@
 export default async function handler(req, res) {
   try {
-    const {
-      amount,
-      orderId,
-      description,
-      successUrl,
-      failUrl
-    } = JSON.parse(req.body || "{}");
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
 
-    // DEMO TINKOFF KEYS (for testing)
+    // VERCEL: req.body is ALREADY a parsed object
+    const { amount, orderId, description, successUrl, failUrl } = req.body || {};
+
+    // DEMO KEYS (works only in DEMO Tinkoff sandbox)
     const TerminalKey = "1614714816763DEMO";
     const SecretKey = "TinkoffBankTest";
 
-    // Validate
+    if (!amount) {
+      return res.status(400).json({ error: "Amount missing" });
+    }
+
     const cleanAmount = Number(amount);
-    if (!cleanAmount || isNaN(cleanAmount)) {
-      return res.status(400).json({
-        error: "Invalid amount",
-        received: amount
-      });
+    if (isNaN(cleanAmount)) {
+      return res.status(400).json({ error: "Invalid amount" });
     }
 
     const payload = {
@@ -27,14 +26,14 @@ export default async function handler(req, res) {
       OrderId: orderId ?? "order-" + Date.now(),
       Description: description ?? "Payment",
       SuccessURL: successUrl,
-      FailURL: failUrl
+      FailURL: failUrl,
     };
 
     // Generate token
+    const crypto = await import("crypto");
     const tokenString =
       Object.keys(payload).sort().map(k => `${k}=${payload[k]}`).join("") + SecretKey;
 
-    const crypto = await import("crypto");
     payload.Token = crypto.createHash("sha256").update(tokenString).digest("hex");
 
     // Send to Tinkoff
@@ -53,6 +52,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ url: data.PaymentURL });
 
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 }
