@@ -357,6 +357,16 @@ async function handleTinkoffPay(product) {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 40, opacity: 0 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
+
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={0.15}
+              onDragEnd={(e, info) => {
+                if (info.offset.y > 120 || info.velocity.y > 800) {
+                  setPopupProduct(null);
+                }
+              }}
+
               className="w-full max-w-lg bg-[#f6f6f6] rounded-t-[2rem] md:rounded-[2rem] p-6 shadow-[0_24px_60px_rgba(15,23,42,0.45)] border border-black/10 flex flex-col max-h-[90vh]"
             >
               {/* Handle bar */}
